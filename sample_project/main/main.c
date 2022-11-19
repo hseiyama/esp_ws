@@ -20,7 +20,6 @@ static void gpio_isr_handler(void *);
 static void vTaskCode( void *);
 static void vTaskCode2( void *);
 
-
 static void gpio_isr_handler(void *arg) {
     uint32_t gpio_num = (uint32_t) arg;
     xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
@@ -36,8 +35,16 @@ static void vTaskCode(void *pvParameters) {
 
     gpio_set_direction(GPIO_NUM_19, GPIO_MODE_OUTPUT);
     gpio_set_direction(GPIO_NUM_21, GPIO_MODE_OUTPUT);
-    //gpio_set_direction(GPIO_NUM_22, GPIO_MODE_INPUT);
-    //gpio_set_direction(GPIO_NUM_23, GPIO_MODE_INPUT);
+#if 0
+    gpio_set_direction(GPIO_NUM_22, GPIO_MODE_INPUT);
+    gpio_set_direction(GPIO_NUM_23, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(GPIO_NUM_22, GPIO_PULLUP_ONLY);
+    gpio_set_pull_mode(GPIO_NUM_23, GPIO_PULLUP_ONLY);
+    gpio_set_intr_type(GPIO_NUM_22, GPIO_INTR_NEGEDGE);
+    gpio_set_intr_type(GPIO_NUM_23, GPIO_INTR_NEGEDGE);
+    gpio_intr_enable(GPIO_NUM_22);
+    gpio_intr_enable(GPIO_NUM_23);
+#else
     gpio_config_t io_conf = {
    		.pin_bit_mask = GPIO_INPUT_PIN_SEL,
 		.mode = GPIO_MODE_INPUT,
@@ -46,6 +53,7 @@ static void vTaskCode(void *pvParameters) {
 		.intr_type = GPIO_INTR_NEGEDGE
     };
     gpio_config(&io_conf);
+#endif
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     gpio_isr_handler_add(GPIO_NUM_22, gpio_isr_handler, (void *)GPIO_NUM_22);
     gpio_isr_handler_add(GPIO_NUM_23, gpio_isr_handler, (void *)GPIO_NUM_23);
