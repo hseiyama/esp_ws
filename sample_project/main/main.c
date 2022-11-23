@@ -16,11 +16,11 @@ static TaskHandle_t xHandle2 = NULL;
 #define GPIO_INPUT_PIN_SEL ((1ULL << GPIO_NUM_22) | (1ULL << GPIO_NUM_23))
 static xQueueHandle gpio_evt_queue = NULL;
 
-static void gpio_isr_handler(void *);
+static void IRAM_ATTR gpio_isr_handler(void *);
 static void vTaskCode( void *);
 static void vTaskCode2( void *);
 
-static void gpio_isr_handler(void *arg) {
+static void IRAM_ATTR gpio_isr_handler(void *arg) {
     uint32_t gpio_num = (uint32_t) arg;
     xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
 }
