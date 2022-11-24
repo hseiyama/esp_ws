@@ -17,8 +17,11 @@ void apl_reinit() {
 }
 
 void apl_main() {
-    if (sys_call_timer_check(&sts_timer, 10)) {
-        printf("Hello apl_main.\n");
+    static uint8_t u8s_count = 0;
+
+    if (sys_call_timer_check(&sts_timer, 1000)) {
+        printf("Hello apl_main. (%d)\n", u8s_count);
+        u8s_count++;
         sys_call_timer_start(&sts_timer);
     }
 }

@@ -5,9 +5,10 @@
 #include "iod_main.h"
 #include "apl_main.h"
 
+#define tskHIGH_PRIORITY    ((UBaseType_t) 2U)
 #define STACK_SIZE_TASK_1MS (2048)
 #define STACK_SIZE_TASK_5MS (4096)
-#define SYS_TIME_MAX (0xFFFFFFFFFFFFFFFF)
+#define SYS_TIME_MAX        (0xFFFFFFFFFFFFFFFF)
 
 static volatile uint64_t u64s_timer_sys;
 
@@ -31,7 +32,7 @@ void app_main(void) {
             "sys_task_1ms",
             STACK_SIZE_TASK_1MS,
             &u32a_previous_wake_time,
-            tskIDLE_PRIORITY,
+            tskHIGH_PRIORITY,
             &pvda_handle_task_1m,
             APP_CPU_NUM);
     xTaskCreatePinnedToCore(sys_task_5ms,
@@ -101,7 +102,7 @@ bool sys_call_timer_isrun(ST_SYS_TIMER *psta_sys_timer) {
 // 内部関数
 static void sys_task_1ms(void *pvd_parameters) {
     TickType_t u32a_previous_wake_time = *(TickType_t *)pvd_parameters;
-    const TickType_t cu32a_frequency = pdMS_TO_TICKS(100);
+    const TickType_t cu32a_frequency = pdMS_TO_TICKS(1);
     while (true) {
         xTaskDelayUntil(&u32a_previous_wake_time, cu32a_frequency);
         u64s_timer_sys++;
@@ -111,7 +112,7 @@ static void sys_task_1ms(void *pvd_parameters) {
 
 static void sys_task_5ms(void *pvd_parameters) {
     TickType_t u32a_previous_wake_time = *(TickType_t *)pvd_parameters;
-    const TickType_t cu32a_frequency = pdMS_TO_TICKS(500);
+    const TickType_t cu32a_frequency = pdMS_TO_TICKS(5);
     while (true) {
         xTaskDelayUntil(&u32a_previous_wake_time, cu32a_frequency);
         sys_main_5ms();
