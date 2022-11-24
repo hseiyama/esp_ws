@@ -46,11 +46,11 @@ static void vTaskCode(void *pvParameters) {
     gpio_intr_enable(GPIO_NUM_23);
 #else
     gpio_config_t io_conf = {
-   		.pin_bit_mask = GPIO_INPUT_PIN_SEL,
-		.mode = GPIO_MODE_INPUT,
-		.pull_up_en = 1,
-		.pull_down_en = 0,
-		.intr_type = GPIO_INTR_NEGEDGE
+        .pin_bit_mask = GPIO_INPUT_PIN_SEL,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = 1,
+        .pull_down_en = 0,
+        .intr_type = GPIO_INTR_NEGEDGE
     };
     gpio_config(&io_conf);
 #endif
@@ -114,7 +114,7 @@ void app_main(void)
 //            PRO_CPU_NUM);
 
     xHandle2 = xTaskCreateStaticPinnedToCore(
-            vTaskCode2,    // Function that implements the task.
+            vTaskCode2,         // Function that implements the task.
             "NAME2",            // Text name for the task.
             STACK_SIZE2,        // Stack size in bytes, not words.
             &ucParameterToPass, // Parameter passed into the task.

@@ -5,46 +5,57 @@
 #include "iod_main.h"
 #include "apl_main.h"
 
-#define tskHIGH_PRIORITY    ((UBaseType_t) 2U)
+#define TASK_PRIORITY_1MS   ((UBaseType_t)2U)
+#define TASK_PRIORITY_5MS   tskIDLE_PRIORITY
 #define STACK_SIZE_TASK_1MS (2048)
 #define STACK_SIZE_TASK_5MS (4096)
+#define SYS_CYCLE_1MS       (1)
+#define SYS_CYCLE_5MS       (5)
 #define SYS_TIME_MAX        (0xFFFFFFFFFFFFFFFF)
 
 static volatile uint64_t u64s_timer_sys;
 
 static void sys_task_1ms(void *);
 static void sys_task_5ms(void *);
-static void sys_init();
-static void sys_deinit();
-static void sys_reinit();
-static void sys_main_1ms();
-static void sys_main_5ms();
+static void sys_init(void);
+static void sys_deinit(void);
+static void sys_reinit(void);
+static void sys_main_1ms(void);
+static void sys_main_5ms(void);
 
 // 外部公開関数
 void app_main(void) {
-    TickType_t u32a_previous_wake_time;
+    TickType_t u32a_last_wake_time;
     TaskHandle_t pvda_handle_task_1m;
     TaskHandle_t pvda_handle_task_5m;
 
     sys_init();
-    u32a_previous_wake_time = xTaskGetTickCount();
-    xTaskCreatePinnedToCore(sys_task_1ms,
+    u32a_last_wake_time = xTaskGetTickCount();
+    // 周期 1msのタスクを生成
+    xTaskCreatePinnedToCore(
+            sys_task_1ms,
             "sys_task_1ms",
             STACK_SIZE_TASK_1MS,
-            &u32a_previous_wake_time,
-            tskHIGH_PRIORITY,
+            &u32a_last_wake_time,
+            TASK_PRIORITY_1MS,
             &pvda_handle_task_1m,
             APP_CPU_NUM);
-    xTaskCreatePinnedToCore(sys_task_5ms,
+    // 周期 5msのタスクを生成
+    xTaskCreatePinnedToCore(
+            sys_task_5ms,
             "sys_task_5ms",
             STACK_SIZE_TASK_5MS,
-            &u32a_previous_wake_time,
-            tskIDLE_PRIORITY,
+            &u32a_last_wake_time,
+            TASK_PRIORITY_5MS,
             &pvda_handle_task_5m,
             APP_CPU_NUM);
 
     while (true) {
         vTaskDelay(1000 / portTICK_RATE_MS);
+        if (false) {
+        	sys_deinit();
+        	sys_reinit();
+        }
     }
 }
 
@@ -101,45 +112,45 @@ bool sys_call_timer_isrun(ST_SYS_TIMER *psta_sys_timer) {
 
 // 内部関数
 static void sys_task_1ms(void *pvd_parameters) {
-    TickType_t u32a_previous_wake_time = *(TickType_t *)pvd_parameters;
-    const TickType_t cu32a_frequency = pdMS_TO_TICKS(1);
+    TickType_t u32a_last_wake_time = *(TickType_t *)pvd_parameters;
+    const TickType_t cu32a_frequency = pdMS_TO_TICKS(SYS_CYCLE_1MS);
     while (true) {
-        xTaskDelayUntil(&u32a_previous_wake_time, cu32a_frequency);
+        xTaskDelayUntil(&u32a_last_wake_time, cu32a_frequency);
         u64s_timer_sys++;
         sys_main_1ms();
     }
 }
 
 static void sys_task_5ms(void *pvd_parameters) {
-    TickType_t u32a_previous_wake_time = *(TickType_t *)pvd_parameters;
-    const TickType_t cu32a_frequency = pdMS_TO_TICKS(5);
+    TickType_t u32a_last_wake_time = *(TickType_t *)pvd_parameters;
+    const TickType_t cu32a_frequency = pdMS_TO_TICKS(SYS_CYCLE_5MS);
     while (true) {
-        xTaskDelayUntil(&u32a_previous_wake_time, cu32a_frequency);
+        xTaskDelayUntil(&u32a_last_wake_time, cu32a_frequency);
         sys_main_5ms();
     }
 }
 
-static void sys_init() {
+static void sys_init(void) {
     u64s_timer_sys = 0;
     iod_init();
     apl_init();
 }
 
-static void sys_deinit() {
+static void sys_deinit(void) {
     apl_deinit();
     iod_deinit();
 }
 
-static void sys_reinit() {
+static void sys_reinit(void) {
     iod_reinit();
     apl_reinit();
 }
 
-static void sys_main_1ms() {
+static void sys_main_1ms(void) {
     iod_main_1ms();
 }
 
-static void sys_main_5ms() {
+static void sys_main_5ms(void) {
     iod_main_in();
     apl_main();
     iod_main_out();
