@@ -7,10 +7,10 @@
 
 #define TASK_PRIORITY_1MS   ((UBaseType_t)2U)
 #define TASK_PRIORITY_5MS   tskIDLE_PRIORITY
-#define STACK_SIZE_TASK_1MS (2048)
-#define STACK_SIZE_TASK_5MS (4096)
-#define SYS_CYCLE_1MS       (1)
-#define SYS_CYCLE_5MS       (5)
+#define TASK_STACK_SIZE_1MS (2048)
+#define TASK_STACK_SIZE_5MS (4096)
+#define TASK_CYCLE_1MS      (1)
+#define TASK_CYCLE_5MS      (5)
 #define SYS_TIME_MAX        (0xFFFFFFFFFFFFFFFF)
 
 static volatile uint64_t u64s_timer_sys;
@@ -33,28 +33,28 @@ void app_main(void) {
     u32a_last_wake_time = xTaskGetTickCount();
     // 周期 1msのタスクを生成
     xTaskCreatePinnedToCore(
-            sys_task_1ms,
-            "sys_task_1ms",
-            STACK_SIZE_TASK_1MS,
-            &u32a_last_wake_time,
-            TASK_PRIORITY_1MS,
-            &pvda_handle_task_1m,
-            APP_CPU_NUM);
+            sys_task_1ms,           // pvTaskCode
+            "sys_task_1ms",         // pcName
+            TASK_STACK_SIZE_1MS,    // usStackDepth
+            &u32a_last_wake_time,   // pvParameters
+            TASK_PRIORITY_1MS,      // uxPriority
+            &pvda_handle_task_1m,   // pvCreatedTask
+            APP_CPU_NUM);           // xCoreID
     // 周期 5msのタスクを生成
     xTaskCreatePinnedToCore(
-            sys_task_5ms,
-            "sys_task_5ms",
-            STACK_SIZE_TASK_5MS,
-            &u32a_last_wake_time,
-            TASK_PRIORITY_5MS,
-            &pvda_handle_task_5m,
-            APP_CPU_NUM);
+            sys_task_5ms,           // pvTaskCode
+            "sys_task_5ms",         // pcName
+            TASK_STACK_SIZE_5MS,    // usStackDepth
+            &u32a_last_wake_time,   // pvParameters
+            TASK_PRIORITY_5MS,      // uxPriority
+            &pvda_handle_task_5m,   // pvCreatedTask
+            APP_CPU_NUM);           // xCoreID
 
     while (true) {
         vTaskDelay(1000 / portTICK_RATE_MS);
         if (false) {
-        	sys_deinit();
-        	sys_reinit();
+            sys_deinit();
+            sys_reinit();
         }
     }
 }
@@ -113,7 +113,7 @@ bool sys_call_timer_isrun(ST_SYS_TIMER *psta_sys_timer) {
 // 内部関数
 static void sys_task_1ms(void *pvd_parameters) {
     TickType_t u32a_last_wake_time = *(TickType_t *)pvd_parameters;
-    const TickType_t cu32a_frequency = pdMS_TO_TICKS(SYS_CYCLE_1MS);
+    const TickType_t cu32a_frequency = pdMS_TO_TICKS(TASK_CYCLE_1MS);
     while (true) {
         xTaskDelayUntil(&u32a_last_wake_time, cu32a_frequency);
         u64s_timer_sys++;
@@ -123,7 +123,7 @@ static void sys_task_1ms(void *pvd_parameters) {
 
 static void sys_task_5ms(void *pvd_parameters) {
     TickType_t u32a_last_wake_time = *(TickType_t *)pvd_parameters;
-    const TickType_t cu32a_frequency = pdMS_TO_TICKS(SYS_CYCLE_5MS);
+    const TickType_t cu32a_frequency = pdMS_TO_TICKS(TASK_CYCLE_5MS);
     while (true) {
         xTaskDelayUntil(&u32a_last_wake_time, cu32a_frequency);
         sys_main_5ms();

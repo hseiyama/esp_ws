@@ -2,6 +2,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "sys_main.h"
+#include "iod_main.h"
 #include "apl_main.h"
 
 static ST_SYS_TIMER sts_timer;
@@ -17,11 +18,22 @@ void apl_reinit(void) {
 }
 
 void apl_main(void) {
+    bool bla_btn0;
+    bool bla_btn1;
+    static bool bla_port = false;
     static uint8_t u8s_count = 0;
+
+    iod_read_btn0(&bla_btn0);
+    iod_read_btn1(&bla_btn1);
+    iod_write_led0(bla_btn0);
+    iod_write_led1(bla_btn1);
 
     if (sys_call_timer_check(&sts_timer, 1000)) {
         printf("Hello apl_main. (%d)\n", u8s_count);
         u8s_count++;
+        iod_write_port0(bla_port);
+        iod_write_port1(!bla_port);
+        bla_port = !bla_port;
         sys_call_timer_start(&sts_timer);
     }
 }
