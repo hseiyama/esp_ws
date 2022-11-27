@@ -116,6 +116,7 @@ bool sys_call_timer_isrun(ST_SYS_TIMER *psta_sys_timer) {
 static void sys_task_1ms(void *pvd_parameters) {
     TickType_t u32a_last_wake_time = *(TickType_t *)pvd_parameters;
     const TickType_t cu32a_frequency = pdMS_TO_TICKS(TASK_CYCLE_1MS);
+
     while (true) {
         xTaskDelayUntil(&u32a_last_wake_time, cu32a_frequency);
         sys_main_1ms();
@@ -125,6 +126,7 @@ static void sys_task_1ms(void *pvd_parameters) {
 static void sys_task_5ms(void *pvd_parameters) {
     TickType_t u32a_last_wake_time = *(TickType_t *)pvd_parameters;
     const TickType_t cu32a_frequency = pdMS_TO_TICKS(TASK_CYCLE_5MS);
+
     while (true) {
         xTaskDelayUntil(&u32a_last_wake_time, cu32a_frequency);
         sys_main_5ms();
