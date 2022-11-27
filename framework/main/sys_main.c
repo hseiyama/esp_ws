@@ -13,7 +13,7 @@
 #define TASK_CYCLE_5MS      (5)
 #define SYS_TIME_MAX        (0xFFFFFFFFFFFFFFFF)
 
-static volatile uint64_t u64s_timer_sys;
+static volatile uint64_t u64s_sys_time;
 
 static void sys_task_1ms(void *);
 static void sys_task_5ms(void *);
@@ -22,6 +22,8 @@ static void sys_deinit(void);
 static void sys_reinit(void);
 static void sys_main_1ms(void);
 static void sys_main_5ms(void);
+static void sys_time_init(void);
+static void sys_time_main(void);
 
 // 外部公開関数
 void app_main(void) {
@@ -60,7 +62,7 @@ void app_main(void) {
 }
 
 void sys_call_timer_start(ST_SYS_TIMER *psta_sys_timer) {
-    psta_sys_timer->u64_time = u64s_timer_sys;
+    psta_sys_timer->u64_time = u64s_sys_time;
     psta_sys_timer->bl_state = true;
 }
 
@@ -87,10 +89,10 @@ uint64_t sys_call_timer_diff(ST_SYS_TIMER *psta_sys_timer, uint64_t u64a_wait_ti
     // タイマーが開始している場合
     if (psta_sys_timer->bl_state) {
         // 経過時間を算出する
-        if (u64s_timer_sys >= psta_sys_timer->u64_time) {
-            u64a_pass_time = u64s_timer_sys - psta_sys_timer->u64_time;
+        if (u64s_sys_time >= psta_sys_timer->u64_time) {
+            u64a_pass_time = u64s_sys_time - psta_sys_timer->u64_time;
         } else {
-            u64a_pass_time = SYS_TIME_MAX - (psta_sys_timer->u64_time - u64s_timer_sys);
+            u64a_pass_time = SYS_TIME_MAX - (psta_sys_timer->u64_time - u64s_sys_time);
         }
         // 待ち時間との差を算出する（経過後は、0を設定）
         if (u64a_wait_time > u64a_pass_time) {
@@ -116,7 +118,6 @@ static void sys_task_1ms(void *pvd_parameters) {
     const TickType_t cu32a_frequency = pdMS_TO_TICKS(TASK_CYCLE_1MS);
     while (true) {
         xTaskDelayUntil(&u32a_last_wake_time, cu32a_frequency);
-        u64s_timer_sys++;
         sys_main_1ms();
     }
 }
@@ -131,7 +132,7 @@ static void sys_task_5ms(void *pvd_parameters) {
 }
 
 static void sys_init(void) {
-    u64s_timer_sys = 0;
+    sys_time_init();
     iod_init();
     apl_init();
 }
@@ -147,6 +148,7 @@ static void sys_reinit(void) {
 }
 
 static void sys_main_1ms(void) {
+    sys_time_main();
     iod_main_1ms();
 }
 
@@ -154,4 +156,12 @@ static void sys_main_5ms(void) {
     iod_main_in();
     apl_main();
     iod_main_out();
+}
+
+static void sys_time_init(void) {
+    u64s_sys_time = 0;
+}
+
+static void sys_time_main(void) {
+    u64s_sys_time++;
 }
