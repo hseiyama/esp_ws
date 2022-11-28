@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include "sys_main.h"
 #include "iod_main.h"
 #include "apl_main.h"
 
 static ST_SYS_TIMER sts_timer_port;
 static ST_SYS_TIMER sts_timer_monitor;
+static xQueueHandle sts_queue_port = NULL;
 
 static void apl_port_init(void);
 static void apl_port_main(void);
@@ -29,8 +31,13 @@ void apl_main(void) {
     apl_monitor_main();
 }
 
+void apl_port_intr(uint8_t u8a_gpio_num){
+    xQueueSendFromISR(sts_queue_port, &u8a_gpio_num, NULL);
+}
+
 // 内部関数
 static void apl_port_init(void) {
+    sts_queue_port = xQueueCreate(10, sizeof(uint8_t));
     sys_call_timer_start(&sts_timer_port);
 }
 
@@ -38,6 +45,7 @@ static void apl_port_main(void) {
     static bool bla_port = false;
     bool bla_btn0;
     bool bla_btn1;
+    uint8_t u8a_gpio_num;
 
     iod_read_btn0(&bla_btn0);
     iod_read_btn1(&bla_btn1);
@@ -48,6 +56,9 @@ static void apl_port_main(void) {
         iod_write_port1(!bla_port);
         bla_port = !bla_port;
         sys_call_timer_start(&sts_timer_port);
+    }
+    if(xQueueReceive(sts_queue_port, &u8a_gpio_num, 0)) {
+        printf("apl_port_intr[%d].\n", u8a_gpio_num);
     }
 }
 
