@@ -1,0 +1,6 @@
+/build/
+/.settings/
+/sdkconfig.old
+/.project
+/.cproject
+/nc.exe
